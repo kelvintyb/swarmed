@@ -6,7 +6,7 @@ $('document').ready(function() {
     update: update
   });
   //init global vars to be assigned game objects later
-  var enemies, player;
+  var enemies, player, control;
 
   function preload() {
     //load images for background, player & enemies
@@ -31,14 +31,33 @@ $('document').ready(function() {
     //create player and assign to GLOBAL var
     player = game.add.sprite(game.world.randomX, game.world.randomY, 'player');
     console.log(player);
-    //enable physics
+    //enable physics and world boundaries
     game.physics.arcade.enable(player);
     player.body.collideWorldBounds = true;
+
+    //create keyboard mapping system - refer to source code at https://github.com/photonstorm/phaser/blob/v2.6.2/src/input/Keyboard.js for more functions. IMPLEMENT proper object functionality by Monday.
+    control = game.input.keyboard.createCursorKeys();
+    //uncomment below to test prevent scrolling method
+    // game.input.keyboard.addKeyCapture(arrow);
 
   }
 
   function update() {
+    //check for collision
     game.physics.arcade.collide(player, enemies);
+    //player control logic - IMPLEMENT variable speed via function (spacebar acceleration?)
+    player.body.velocity.x = 0, player.body.velocity.y = 0;
+    if (control.left.isDown) {
+      player.body.velocity.x = -200;
+    } else if (control.right.isDown) {
+      player.body.velocity.x = 200;
+    }
+    if (control.up.isDown) {
+      player.body.velocity.y = -200;
+    } else if (control.down.isDown) {
+      player.body.velocity.y = 200;
+    }
+
   }
 
 });
