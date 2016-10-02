@@ -6,7 +6,7 @@ $('document').ready(function() {
     update: update
   });
   //init global vars to be assigned game objects later
-  var enemies, player, control;
+  var enemies, enemy, player, control;
 
   function preload() {
     //load images for background, player & enemies
@@ -26,8 +26,9 @@ $('document').ready(function() {
     //enable physics for anything in enemies group
     enemies.enableBody = true;
     //create enemy and store into enemy var
-    var enemy = enemies.create(game.world.randomX, game.world.randomY, 'enemy');
-
+    enemy = enemies.create(game.world.randomX, game.world.randomY, 'enemy');
+    console.log(enemy);
+    console.log(enemies);
     //create player and assign to GLOBAL var
     player = game.add.sprite(game.world.randomX, game.world.randomY, 'player');
     console.log(player);
@@ -38,7 +39,7 @@ $('document').ready(function() {
     //create keyboard mapping system - refer to source code at https://github.com/photonstorm/phaser/blob/v2.6.2/src/input/Keyboard.js for more functions. IMPLEMENT proper object functionality by Monday.
     control = game.input.keyboard.createCursorKeys();
     //uncomment below to test prevent scrolling method
-    // game.input.keyboard.addKeyCapture(arrow);
+    game.input.keyboard.addKeyCapture(control);
 
   }
 
@@ -58,6 +59,10 @@ $('document').ready(function() {
       player.body.velocity.y = 200;
     }
 
-  }
+    //check for angle between enemy and player & apply to directional velocity of enemy to simulate tracking IMPLEMENT multiple enemy tracking
+    var radians = game.physics.arcade.angleBetween(enemies.children[0], player);
+    var degrees = (180 / Math.PI) * radians;
+    game.physics.arcade.velocityFromAngle(degrees, 100, enemies.children[0].body.velocity);
 
+  }
 });
