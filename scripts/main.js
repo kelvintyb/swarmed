@@ -7,7 +7,8 @@ $('document').ready(function() {
     render: render
   });
   //init global vars to be assigned game objects later, consider refactoring later into global game object
-  var enemies, enemy, player, control, timer, score = 0;
+  var enemies, enemy, player, control, scoreTimer, score = 0,
+    enemyTimer;
 
   function preload() {
     //load images for background, player & enemies
@@ -16,6 +17,7 @@ $('document').ready(function() {
     game.load.spritesheet('player', 'assets/dude.png', 32, 48);
   }
 
+  //IMPLEMENT: 4 overlord objects from which enemies will spawn
   function create() {
     //initialise physics system
     game.physics.startSystem(Phaser.Physics.ARCADE)
@@ -32,7 +34,8 @@ $('document').ready(function() {
 
     //create player and assign to GLOBAL var
     player = game.add.sprite(game.world.randomX, game.world.randomY, 'player');
-    // player.scale.setTo(0.5, 0.5)
+    //scaling for game balance
+    player.scale.setTo(0.75, 0.75)
 
     //enable physics and world boundaries
     game.physics.arcade.enable(player);
@@ -44,13 +47,28 @@ $('document').ready(function() {
     game.input.keyboard.addKeyCapture(control);
 
     //create timer to keep track of score
-    timer = game.time.create(false);
-    timer.loop(1000, updateScore, this);
-    timer.start();
+    scoreTimer = game.time.create(false);
+    scoreTimer.loop(1, updateScore, this);
+    scoreTimer.start();
 
     function updateScore() {
       score++;
     }
+    //create timer to spawn enemies
+    enemyTimer = game.time.create(false);
+    enemyTimer.loop(1000, spawnEnemy, this)
+    enemyTimer.start();
+
+    function spawnEnemy() {
+      //IMPLEMENT spawn away from player
+      //multiplier to increase spawn rate
+      var multiplier = Math.ceil(score / 1000);
+      console.log(multiplier);
+      for (var i = 0; i < multiplier; i++) {
+        enemies.create(game.world.randomX, game.world.randomY, 'enemy');
+      }
+    }
+
   }
 
   function update() {
@@ -64,7 +82,7 @@ $('document').ready(function() {
       enemy.kill();
 
       //IMPLEMENT insert update scoreboard function here?
-      timer.stop();
+      scoreTimer.stop();
     }
 
     //player control logic - IMPLEMENT variable speed via function (spacebar acceleration?)
@@ -80,25 +98,19 @@ $('document').ready(function() {
       player.body.velocity.y = 200;
     }
 
-    if (enemies.children.length < 10 && score % 3 == 1) {
-      enemies.create(game.world.randomX, game.world.randomY, 'enemy');
-    }
-
-
 
     //check for angle between each enemy and player & apply to directional velocity of enemy to simulate tracking
     //IMPLEMENT multiple player tracking
+    //IMPLEMENT increasing velocity for each enemy
+    //IMPLEMENT consider every alternate enemy has tracking abilities, and the rest just go randomly
     enemies.children.forEach(function(enemy) {
       var degrees = (180 / Math.PI) * game.physics.arcade.angleBetween(enemy, player);
       var randomiser = game.rnd.integerInRange(-90, 90)
-      game.physics.arcade.velocityFromAngle(degrees + randomiser, 100, enemy.body.velocity);
+      game.physics.arcade.velocityFromAngle(degrees + randomiser, 150, enemy.body.velocity);
     })
-
-
-
   }
 
   function render() {
-    game.debug.text('Survived for ' + score + ' seconds', 32, 32)
+    game.debug.text('Your score is ' + score + '!', 32, 32)
   }
 });
