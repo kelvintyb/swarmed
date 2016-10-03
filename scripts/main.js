@@ -17,7 +17,7 @@ $('document').ready(function() {
     game.load.spritesheet('player', 'assets/dude.png', 32, 48);
   }
 
-  //IMPLEMENT: 4 overlord objects from which enemies will spawn
+  //IMPLEMENT: 4 overlord objects from which enemies will spawn - use randomiser function to determine x,y
   function create() {
     //initialise physics system
     game.physics.startSystem(Phaser.Physics.ARCADE)
