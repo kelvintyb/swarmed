@@ -28,14 +28,12 @@ $('document').ready(function() {
     enemies.enableBody = true;
     //create enemy and store into enemy var
     enemy = enemies.create(game.world.randomX, game.world.randomY, 'enemy');
-    //BUG: if using scale, may break overlap function later - cld workaround using .sprite on the player object and individual enemy objects
     // enemy.scale.setTo(0.5, 0.5)
-    console.log(enemy);
-    console.log(enemies);
+
     //create player and assign to GLOBAL var
     player = game.add.sprite(game.world.randomX, game.world.randomY, 'player');
     // player.scale.setTo(0.5, 0.5)
-    console.log(player);
+
     //enable physics and world boundaries
     game.physics.arcade.enable(player);
     player.body.collideWorldBounds = true;
@@ -57,14 +55,14 @@ $('document').ready(function() {
 
   function update() {
     //check for collision
-    game.physics.arcade.collide(player, enemies);
-    //callback when collision happens
-    game.physics.arcade.overlap(player, enemies, collideHandler, null, this);
-    //collided function to kill player - note that with overlap callback functions, the sprite individual will always get passed in as the 1st parameter, while the child of the sprite group will get passed in as the 2nd parameter
+    game.physics.arcade.collide(player, enemies, collideHandler);
+
+    //collided function to kill player - note that with overlap/collide callback functions, the sprite individual will always get passed in as the 1st parameter, while the child of the sprite group will get passed in as the 2nd parameter
     function collideHandler(player, enemy) {
       console.log('when stars collide')
       player.kill();
       enemy.kill();
+
       //IMPLEMENT insert update scoreboard function here?
       timer.stop();
     }
@@ -82,9 +80,22 @@ $('document').ready(function() {
       player.body.velocity.y = 200;
     }
 
-    //check for angle between enemy and player & apply to directional velocity of enemy to simulate tracking IMPLEMENT multiple enemy tracking
-    var degrees = (180 / Math.PI) * game.physics.arcade.angleBetween(enemies.children[0], player);
-    game.physics.arcade.velocityFromAngle(degrees, 100, enemies.children[0].body.velocity);
+    if (enemies.children.length < 10 && score % 3 == 1) {
+      enemies.create(game.world.randomX, game.world.randomY, 'enemy');
+    }
+
+
+
+    //check for angle between each enemy and player & apply to directional velocity of enemy to simulate tracking
+    //IMPLEMENT multiple player tracking
+    enemies.children.forEach(function(enemy) {
+      var degrees = (180 / Math.PI) * game.physics.arcade.angleBetween(enemy, player);
+      var randomiser = game.rnd.integerInRange(-90, 90)
+      game.physics.arcade.velocityFromAngle(degrees + randomiser, 100, enemy.body.velocity);
+    })
+
+
+
   }
 
   function render() {
