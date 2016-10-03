@@ -111,6 +111,6 @@ $('document').ready(function() {
   }
 
   function render() {
-    game.debug.text('Your score is ' + score + '!', 32, 32)
+    game.debug.text('Your score is ' + score, 32, 32)
   }
 });
