@@ -1,7 +1,8 @@
 //IMPLEMENT animation for objects
-//IMPLEMENT states
+//IMPLEMENT states/instructions
 //IMPLEMENT 2 players
-//IMPLEMENT
+//IMPLEMENT portal
+//IMPLEMENT MULTI
 
 $('document').ready(function() {
   var enemies,
@@ -16,7 +17,7 @@ $('document').ready(function() {
     enemyTimer,
     numOfPlayers = 1,
     shields,
-    shield = 0,
+    shield = 100,
     shieldTimer,
     nukes,
     nuke,
@@ -35,8 +36,8 @@ $('document').ready(function() {
 
   //init player group and based on length of player.children, initiate number of enemy tracking groups to be randomised amongst the four spots
   function randSpawn() {
-    var spawnX = [100, game.world.width - 100];
-    var spawnY = [150, game.world.height - 150];
+    var spawnX = [125, game.world.width - 200];
+    var spawnY = [75, game.world.height - 150];
     var randX = spawnX[Math.round(Math.random())]
     var randY = spawnY[Math.round(Math.random())]
 
@@ -49,11 +50,13 @@ $('document').ready(function() {
   function preload() {
     //load images for background, player & enemies
     game.load.image('background', 'assets/background2.jpg');
-    game.load.image('enemy', 'assets/star.png')
-    game.load.spritesheet('player', 'assets/dude.png', 32, 48);
-    game.load.spritesheet('overlord', 'assets/dude.png', 32, 48);
+    game.load.image('enemy', 'assets/monster.png')
+    game.load.image('player', 'assets/ship1.png');
+    game.load.image('overlord', 'assets/overlords1.png');
     game.load.image('shield', 'assets/star.png');
-    game.load.image('nuke', 'assets/star.png');
+    game.load.image('nuke', 'assets/ship2.png');
+    game.load.spritesheet('nitro', 'assets/dude.png', 32, 48);
+
   }
 
   function create() {
@@ -67,10 +70,10 @@ $('document').ready(function() {
     background.width = game.width;
     //initialise spawn points
     function addOverlord() {
-      game.add.sprite(125, 125, 'overlord');
-      game.add.sprite(125, game.world.height - 125, 'overlord');
-      game.add.sprite(game.world.width - 125, 125, 'overlord');
-      game.add.sprite(game.world.width - 125, game.world.height - 125, 'overlord')
+      game.add.sprite(125, 75, 'overlord');
+      game.add.sprite(125, game.world.height - 150, 'overlord');
+      game.add.sprite(game.world.width - 200, 75, 'overlord');
+      game.add.sprite(game.world.width - 200, game.world.height - 150, 'overlord')
     }
     addOverlord();
     //assign GLOBAL group to delegate control of enemies
@@ -115,7 +118,9 @@ $('document').ready(function() {
       //multiplier to increase spawn rate
       var multiplier = Math.ceil(score / 5000);
       for (var i = 0; i < multiplier; i++) {
-        enemies.create(randSpawn().x, randSpawn().y, 'enemy');
+        var enemy = enemies.create(randSpawn().x, randSpawn().y, 'enemy');
+        enemy.scale.setTo(0.75, 0.75);
+
         //based on loops counter & num of players, assign to player group
       }
     }
@@ -148,17 +153,17 @@ $('document').ready(function() {
     }
 
     function spawnShield() {
-      shields.create(game.world.randomX, game.world.randomY, 'star');
+      shields.create(game.world.randomX, game.world.randomY, 'shield');
       console.log('shield created')
     }
 
     function spawnNuke() {
-      nukes.create(game.world.randomX, game.world.randomY, 'player');
+      nukes.create(game.world.randomX, game.world.randomY, 'nuke');
       console.log('nuke created');
     }
 
     function spawnNitro() {
-      nitros.create(game.world.randomX, game.world.randomY, 'player');
+      nitros.create(game.world.randomX, game.world.randomY, 'nitro');
       console.log('nitro created');
     }
     //create keyboard mapping system - refer to source code at https://github.com/photonstorm/phaser/blob/v2.6.2/src/input/Keyboard.js for more functions.
@@ -214,6 +219,9 @@ $('document').ready(function() {
         player.kill();
         scoreTimer.stop();
         enemyTimer.stop();
+        shieldTimer.stop();
+        nukeTimer.stop();
+        nitroTimer.stop();
         updateHighScore();
       }
     }
