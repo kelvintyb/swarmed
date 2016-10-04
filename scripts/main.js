@@ -3,14 +3,15 @@
 //init global vars, consider refactoring later into global game object
 var enemies,
   enemy,
-  numOfPlayers = 1,
   players,
   player,
   control,
   scoreTimer,
   score = 0,
   highScore = 0,
-  enemyTimer;
+  enemyTimer,
+  numOfPlayers = 1;
+
 
 $('document').ready(function() {
 
@@ -42,6 +43,8 @@ $('document').ready(function() {
     game.load.image('enemy', 'assets/star.png')
     game.load.spritesheet('player', 'assets/dude.png', 32, 48);
     game.load.spritesheet('overlord', 'assets/dude.png', 32, 48);
+    game.load.image('shield', 'assets/star.png');
+    game.load.image('nuke', 'assets/star.png');
   }
 
   function create() {
