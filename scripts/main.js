@@ -1,4 +1,8 @@
 //IMPLEMENT animation for objects
+//IMPLEMENT states
+//IMPLEMENT 2 players
+//IMPLEMENT
+
 $('document').ready(function() {
   var enemies,
     enemy,
@@ -55,9 +59,12 @@ $('document').ready(function() {
   function create() {
     //initialise physics system
     game.physics.startSystem(Phaser.Physics.ARCADE)
-      //initialise game map background
-    game.add.sprite(0, 0, 'background');
-
+      //initialise game map background and scale to game dimensions
+    var background = game.add.sprite(0, 0, 'background');
+    background.x = 0;
+    background.y = 0;
+    background.height = game.height;
+    background.width = game.width;
     //initialise spawn points
     function addOverlord() {
       game.add.sprite(125, 125, 'overlord');
