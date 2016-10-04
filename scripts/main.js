@@ -1,6 +1,6 @@
 //IMPLEMENT animation for objects
 //
-//init global vars to be assigned game objects later, consider refactoring later into global game object
+//init global vars, consider refactoring later into global game object
 var enemies,
   enemy,
   numOfPlayers = 1,
@@ -19,8 +19,7 @@ $('document').ready(function() {
     create: create,
     update: update,
     render: render
-  });
-
+  })
 
   //init player group and based on length of player.children, initiate number of enemy tracking groups to be randomised amongst the four spots
   function randCoord() {
@@ -39,13 +38,12 @@ $('document').ready(function() {
 
   function preload() {
     //load images for background, player & enemies
-    game.load.image('background', 'assets/sky.png');
+    game.load.image('background', 'assets/background2.jpg');
     game.load.image('enemy', 'assets/star.png')
     game.load.spritesheet('player', 'assets/dude.png', 32, 48);
     game.load.spritesheet('overlord', 'assets/dude.png', 32, 48);
   }
 
-  //IMPLEMENT: 4 overlord objects from which enemies will spawn - use randomiser function to determine x,y
   function create() {
     //initialise physics system
     game.physics.startSystem(Phaser.Physics.ARCADE)
@@ -53,23 +51,25 @@ $('document').ready(function() {
     game.add.sprite(0, 0, 'background');
 
     //initialise spawn points
-    game.add.sprite(100, 150, 'overlord');
-    game.add.sprite(100, game.world.height - 150, 'overlord');
-    game.add.sprite(game.world.width - 100, 150, 'overlord');
-    game.add.sprite(game.world.width - 100, game.world.height - 150, 'overlord')
-
+    function addOverlord() {
+      game.add.sprite(125, 125, 'overlord');
+      game.add.sprite(125, game.world.height - 125, 'overlord');
+      game.add.sprite(game.world.width - 125, 125, 'overlord');
+      game.add.sprite(game.world.width - 125, game.world.height - 125, 'overlord')
+    }
+    addOverlord();
     //assign GLOBAL group to delegate control of enemies
     enemies = game.add.group();
     //enable physics for anything in enemies group
     enemies.enableBody = true;
-    //create enemy function taking in num of enemies & IMPLEMENT location array, implement in spawnTimer
-    function createEnemy(num, xcoord, ycoord) {
-      for (var i = 0; i < num; i++) {
-        enemy = enemies.create(xcoord, ycoord, 'enemy');
-        // enemy.scale.setTo(0.5, 0.5)
-      }
-    }
-    createEnemy(1, randCoord().x, randCoord().y);
+
+    // function createEnemy(num, xcoord, ycoord) {
+    //   for (var i = 0; i < num; i++) {
+    //     enemy = enemies.create(xcoord, ycoord, 'enemy');
+    //     // enemy.scale.setTo(0.5, 0.5)
+    //   }
+    // }
+    // createEnemy(1, randCoord().x, randCoord().y);
 
     //create player and assign to GLOBAL var
     function createPlayer(numOfPlayers) {
@@ -88,31 +88,27 @@ $('document').ready(function() {
       player.body.collideWorldBounds = true;
     }
 
-    //create keyboard mapping system - refer to source code at https://github.com/photonstorm/phaser/blob/v2.6.2/src/input/Keyboard.js for more functions. IMPLEMENT proper object functionality by Monday.
+    //create keyboard mapping system - refer to source code at https://github.com/photonstorm/phaser/blob/v2.6.2/src/input/Keyboard.js for more functions.
+
     control = game.input.keyboard.createCursorKeys();
-    //uncomment below to test prevent scrolling method
+    //prevent accidental window scrolling when in canvas focus
     game.input.keyboard.addKeyCapture(control);
 
+    //BUG: if i wrap timer creation into a function, update func will raise an error on .stop() - timer is undefined
     //create timer to keep track of score
-    function scoreTimer(milliseconds) {
-      scoreTimer = game.time.create(false);
-      scoreTimer.loop(milliseconds, updateScore, this);
-      scoreTimer.start();
-    }
-    scoreTimer(1);
+    scoreTimer = game.time.create(false);
+    scoreTimer.loop(1, updateScore, this);
+    scoreTimer.start();
 
     function updateScore() {
       score++;
     }
     //create timer to spawn enemies
-    function spawnTimer(milliseconds) {
-      enemyTimer = game.time.create(false);
-      //maybe put in players.forEach and use index to determine assign to which enemy group
-      enemyTimer.loop(milliseconds, spawnEnemy, this)
-      enemyTimer.start();
-      //IMPLEMENT no. of loops counter
-    }
-    spawnTimer(1000);
+    enemyTimer = game.time.create(false);
+    //maybe put in players.forEach and use index to determine assign to which enemy group
+    enemyTimer.loop(1000, spawnEnemy, this)
+    enemyTimer.start();
+
     //IMPLEMENT spawn away from player
     function spawnEnemy() {
       //multiplier to increase spawn rate
@@ -138,6 +134,13 @@ $('document').ready(function() {
       enemy.kill();
       scoreTimer.stop();
       enemyTimer.stop();
+      updateHighScore();
+    }
+
+    function updateHighScore() {
+      if (highScore < score) {
+        highScore = score;
+      }
     }
 
     //player control logic - IMPLEMENT variable speed via function (spacebar acceleration?)
