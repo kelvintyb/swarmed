@@ -1,5 +1,6 @@
-//IMPLEMENT animation for objects
 //IMPLEMENT states/instructions
+//IMPLEMENT animation for objects
+//IMPLEMENT sounds
 //IMPLEMENT 2 players
 //IMPLEMENT portal
 //IMPLEMENT MULTI
@@ -49,7 +50,7 @@ $('document').ready(function() {
 
   function preload() {
     //load images for background, player & enemies
-    game.load.image('background', 'assets/background2.jpg');
+    game.load.image('background', 'assets/game-background.jpg');
     game.load.image('enemy', 'assets/monster.png')
     game.load.image('player', 'assets/ship1.png');
     game.load.image('overlord', 'assets/overlords1.png');
