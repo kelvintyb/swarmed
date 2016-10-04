@@ -1,19 +1,26 @@
 //IMPLEMENT animation for objects
-//
-//init global vars, consider refactoring later into global game object
-var enemies,
-  enemy,
-  players,
-  player,
-  control,
-  scoreTimer,
-  score = 0,
-  highScore = 0,
-  enemyTimer,
-  numOfPlayers = 1;
-
-
 $('document').ready(function() {
+  var enemies,
+    enemy,
+    players,
+    player,
+    playerSpeed = 200,
+    control,
+    scoreTimer,
+    score = 0,
+    highScore = 0,
+    enemyTimer,
+    numOfPlayers = 1,
+    shields,
+    shield = 0,
+    shieldTimer,
+    nukes,
+    nuke,
+    nukeTimer,
+    nitros,
+    nitro,
+    nitroTimer,
+    decayTimer;
 
   var game = new Phaser.Game(800, 600, Phaser.AUTO, 'gameCanvas', {
     preload: preload,
@@ -23,7 +30,7 @@ $('document').ready(function() {
   })
 
   //init player group and based on length of player.children, initiate number of enemy tracking groups to be randomised amongst the four spots
-  function randCoord() {
+  function randSpawn() {
     var spawnX = [100, game.world.width - 100];
     var spawnY = [150, game.world.height - 150];
     var randX = spawnX[Math.round(Math.random())]
@@ -34,8 +41,6 @@ $('document').ready(function() {
       y: randY
     }
   }
-
-
 
   function preload() {
     //load images for background, player & enemies
@@ -66,14 +71,6 @@ $('document').ready(function() {
     //enable physics for anything in enemies group
     enemies.enableBody = true;
 
-    // function createEnemy(num, xcoord, ycoord) {
-    //   for (var i = 0; i < num; i++) {
-    //     enemy = enemies.create(xcoord, ycoord, 'enemy');
-    //     // enemy.scale.setTo(0.5, 0.5)
-    //   }
-    // }
-    // createEnemy(1, randCoord().x, randCoord().y);
-
     //create player and assign to GLOBAL var
     function createPlayer(numOfPlayers) {
       players = game.add.group();
@@ -91,12 +88,6 @@ $('document').ready(function() {
       player.body.collideWorldBounds = true;
     }
 
-    //create keyboard mapping system - refer to source code at https://github.com/photonstorm/phaser/blob/v2.6.2/src/input/Keyboard.js for more functions.
-
-    control = game.input.keyboard.createCursorKeys();
-    //prevent accidental window scrolling when in canvas focus
-    game.input.keyboard.addKeyCapture(control);
-
     //BUG: if i wrap timer creation into a function, update func will raise an error on .stop() - timer is undefined
     //create timer to keep track of score
     scoreTimer = game.time.create(false);
@@ -109,35 +100,115 @@ $('document').ready(function() {
     //create timer to spawn enemies
     enemyTimer = game.time.create(false);
     //maybe put in players.forEach and use index to determine assign to which enemy group
-    enemyTimer.loop(1000, spawnEnemy, this)
+    enemyTimer.loop(1000, spawnEnemy, this);
     enemyTimer.start();
 
     //IMPLEMENT spawn away from player
     function spawnEnemy() {
       //multiplier to increase spawn rate
-      var multiplier = Math.ceil(score / 1000);
+      var multiplier = Math.ceil(score / 5000);
       for (var i = 0; i < multiplier; i++) {
-        enemies.create(randCoord().x, randCoord().y, 'enemy');
+        enemies.create(randSpawn().x, randSpawn().y, 'enemy');
         //based on loops counter & num of players, assign to player group
       }
     }
 
+    //initialise groups for powerups, and respective powerup timers
+    shields = game.add.group();
+    shields.enableBody = true;
+    nukes = game.add.group();
+    nukes.enableBody = true;
+    nitros = game.add.group();
+    nitros.enableBody = true;
+    //init timers for powerups;
+    shieldTimer = game.time.create(false);
+    shieldTimer.loop(10000, spawnShield, this);
+    shieldTimer.start();
+    nukeTimer = game.time.create(false);
+    nukeTimer.loop(35000, spawnNuke, this);
+    nukeTimer.start();
+    nitroTimer = game.time.create(false);
+    nitroTimer.loop(8000, spawnNitro, this);
+    nitroTimer.start();
+    decayTimer = game.time.create(false);
+    decayTimer.loop(2500, nitroDecay, this);
+    decayTimer.start();
+
+    function nitroDecay() {
+      while (playerSpeed > 200) {
+        playerSpeed -= 10;
+      }
+    }
+
+    function spawnShield() {
+      shields.create(game.world.randomX, game.world.randomY, 'star');
+      console.log('shield created')
+    }
+
+    function spawnNuke() {
+      nukes.create(game.world.randomX, game.world.randomY, 'player');
+      console.log('nuke created');
+    }
+
+    function spawnNitro() {
+      nitros.create(game.world.randomX, game.world.randomY, 'player');
+      console.log('nitro created');
+    }
+    //create keyboard mapping system - refer to source code at https://github.com/photonstorm/phaser/blob/v2.6.2/src/input/Keyboard.js for more functions.
+    control = game.input.keyboard.createCursorKeys();
+    //prevent accidental window scrolling when in canvas focus
+    game.input.keyboard.addKeyCapture(control);
   }
 
   function update() {
-    //check for collision
+    //check for collision btw player & enemies or powerups
     game.physics.arcade.collide(player, enemies, collideHandler);
+    game.physics.arcade.collide(player, shields, shieldHandler);
+    game.physics.arcade.collide(player, nukes, nukeHandler);
+    game.physics.arcade.collide(player, nitros, nitroHandler);
 
     //collided function to kill player - note that with overlap/collide callback functions, the sprite individual will always get passed in as the 1st parameter, while the child of the sprite group will get passed in as the 2nd parameter
     //IMPLEMENT insert update scoreboard function here?
 
+    function shieldHandler(player, shieldObj) {
+      console.log('when shields collide')
+      if (shield <= 100) {
+        //SOUND
+        score += 2500
+      } else {
+        score += 5000
+      }
+      shield += 100
+      shieldObj.kill();
+    }
+
+    function nukeHandler(player, nuke) {
+      console.log('when nukes collide')
+      enemies.children.forEach(function(enemy) {
+        enemy.kill();
+      })
+      nuke.kill();
+    }
+
+    function nitroHandler(player, nitro) {
+      playerSpeed = 350;
+      score += 1500;
+      nitro.kill();
+    }
+
     function collideHandler(player, enemy) {
       console.log('when stars collide')
-      player.kill();
-      enemy.kill();
-      scoreTimer.stop();
-      enemyTimer.stop();
-      updateHighScore();
+      if (shield > 0) {
+        enemy.kill();
+        shield -= 20
+          //SOUND
+      } else {
+        enemy.kill();
+        player.kill();
+        scoreTimer.stop();
+        enemyTimer.stop();
+        updateHighScore();
+      }
     }
 
     function updateHighScore() {
@@ -145,7 +216,6 @@ $('document').ready(function() {
         highScore = score;
       }
     }
-
     //player control logic - IMPLEMENT variable speed via function (spacebar acceleration?)
     function movementHandler(player, speed) {
       player.body.velocity.x = 0, player.body.velocity.y = 0;
@@ -160,7 +230,7 @@ $('document').ready(function() {
         player.body.velocity.y = speed;
       }
     }
-    movementHandler(player, 200);
+    movementHandler(player, playerSpeed);
 
     //check for angle between each enemy and player & apply to directional velocity of enemy to simulate tracking
     //IMPLEMENT multiple player tracking
@@ -179,5 +249,6 @@ $('document').ready(function() {
   function render() {
     game.debug.text('Your score is ' + score, 32, 32)
     game.debug.text('HIGH SCORE: ' + highScore, 32, 64)
+    game.debug.text('Shields: ' + shield, 400, 32)
   }
 });
