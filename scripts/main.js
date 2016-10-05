@@ -257,7 +257,6 @@ function create() {
     for (var i = 0; i < multiplier; i++) {
       var enemy = enemies.create(randSpawn().x, randSpawn().y, 'enemy');
       enemy.scale.setTo(0.75, 0.75);
-
       //based on loops counter & num of players, assign to player group
     }
   }
