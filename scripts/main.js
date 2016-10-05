@@ -100,6 +100,7 @@ function randSpawn() {
     y: randY
   }
 }
+o
 
 function preload() {
   //loading text
@@ -196,15 +197,15 @@ function create() {
   nukeTimer.loop(35000, spawnNuke, this);
   nukeTimer.start();
   nitroTimer = game.time.create(false);
-  nitroTimer.loop(8000, spawnNitro, this);
+  nitroTimer.loop(9000, spawnNitro, this);
   nitroTimer.start();
   decayTimer = game.time.create(false);
-  decayTimer.loop(2500, nitroDecay, this);
+  decayTimer.loop(1000, nitroDecay, this);
   decayTimer.start();
 
   function nitroDecay() {
-    while (playerSpeed > 200) {
-      playerSpeed -= 10;
+    if (playerSpeed > 200) {
+      playerSpeed -= 15;
     }
   }
 
