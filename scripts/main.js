@@ -1,8 +1,9 @@
 //IMPLEMENT states/instructions
-//IMPLEMENT animation for objects
-//IMPLEMENT sounds
+//IMPLEMENT animation for objects/ change color of mutas
+//IMPLEMENT sounds - for player getting hit, player killed, nuke appearing, nuke damage & mutas dying, shield/nitro appearing, shield collide, nitro collide
+
 //IMPLEMENT 2 players
-//IMPLEMENT portal
+//init player group and based on length of player.children, initiate number of enemy tracking groups to be randomised amongst the four spots
 //IMPLEMENT MULTI
 
 // $('document').ready(function() {
@@ -53,14 +54,15 @@ var menuState = {
       fill: '#f469e2'
     })
 
-    // Learn how to play by clicking the button below or\n select one of the game modes to begin.
-    var startLabel = game.add.text(80, 500, "Press 'S' to begin, and use your arrow keys to control the wraith. \nAvoid the mutalisks!!!", {
+    // TEXT to be inserted later: Learn how to play by clicking the button below or\n select one of the game modes to begin.
+    var startLabel = game.add.text(80, 500, "Press 'S' to begin, and use your arrow keys to control the wraith.\nAvoid the mutalisks!!!", {
       font: '20px Arial',
       fill: '#ffffff'
     });
-
+    //key to start 1 player game
     var sKey = game.input.keyboard.addKey(Phaser.Keyboard.S);
     sKey.onDown.addOnce(this.start, this);
+
   },
   start: function() {
     game.state.start('play');
@@ -88,19 +90,8 @@ game.state.start('boot');
 //   render: render
 // })
 
-//init player group and based on length of player.children, initiate number of enemy tracking groups to be randomised amongst the four spots
-function randSpawn() {
-  var spawnX = [125, game.world.width - 200];
-  var spawnY = [75, game.world.height - 150];
-  var randX = spawnX[Math.round(Math.random())]
-  var randY = spawnY[Math.round(Math.random())]
 
-  return {
-    x: randX,
-    y: randY
-  }
-}
-o
+
 
 function preload() {
   //loading text
@@ -109,13 +100,13 @@ function preload() {
       fill: '#ffffff'
     })
     //load images for background, player & enemies
-  game.load.image('background', 'assets/game-background.jpg');
+  game.load.image('background', 'assets/orangebg2.png');
   game.load.image('enemy', 'assets/monster.png')
   game.load.image('player', 'assets/ship1.png');
   game.load.image('overlord', 'assets/overlords1.png');
-  game.load.image('shield', 'assets/star.png');
-  game.load.image('nuke', 'assets/ship2.png');
-  game.load.spritesheet('nitro', 'assets/dude.png', 32, 48);
+  game.load.image('shield', 'assets/shield.png');
+  game.load.image('nuke', 'assets/nuke.png');
+  game.load.image('nitro', 'assets/speed2.png');
 }
 
 function create() {
@@ -171,6 +162,18 @@ function create() {
   enemyTimer.start();
 
   //IMPLEMENT spawn away from player
+  function randSpawn() {
+    var spawnX = [125, game.world.width - 200];
+    var spawnY = [75, game.world.height - 150];
+    var randX = spawnX[Math.round(Math.random())]
+    var randY = spawnY[Math.round(Math.random())]
+
+    return {
+      x: randX,
+      y: randY
+    }
+  }
+
   function spawnEnemy() {
     //multiplier to increase spawn rate
     var multiplier = Math.ceil(score / 5000);
