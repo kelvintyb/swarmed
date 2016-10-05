@@ -15,6 +15,7 @@ var enemies,
   control,
   scoreTimer,
   score = 0,
+  currScore = 0,
   highScore = 0,
   enemyTimer,
   numOfPlayers = 1,
@@ -69,6 +70,28 @@ var menuState = {
   }
 }
 
+var loseState = {
+  create: function() {
+    //Create m key listener for restart
+    var mkey = game.input.keyboard.addKey(Phaser.Keyboard.M);
+    mkey.onDown.addOnce(this.restart, this);
+
+    game.add.text(80, 80, "You have been muta-liated.\nPress 'M' to go back\n to the main menu.", {
+      font: '28px starcraft',
+      fill: '#14b825'
+    });
+
+    game.add.text(160, 340, "Player 1's score is: " + currScore, {
+      font: '28px Courier',
+      fill: 'rgb(198, 1, 1)'
+    })
+  },
+  restart: function() {
+    game.state.start('menu');
+
+  }
+}
+
 var playState = {
   create: create,
   update: update,
@@ -79,7 +102,7 @@ game.state.add('boot', bootState);
 game.state.add('load', loadState);
 game.state.add('menu', menuState);
 game.state.add('play', playState);
-// game.state.add('win', winState);
+game.state.add('lose', loseState);
 
 game.state.start('boot');
 
@@ -277,19 +300,31 @@ function update() {
     } else {
       enemy.kill();
       player.kill();
-      scoreTimer.stop();
-      enemyTimer.stop();
-      shieldTimer.stop();
-      nukeTimer.stop();
-      nitroTimer.stop();
-      updateHighScore();
+      stopTimers();
+      updateScores();
+      resetShields();
+      game.state.start('lose')
     }
   }
 
-  function updateHighScore() {
+  function stopTimers() {
+    scoreTimer.stop();
+    enemyTimer.stop();
+    shieldTimer.stop();
+    nukeTimer.stop();
+    nitroTimer.stop();
+  }
+
+  function resetShields() {
+    shield = 100;
+  }
+
+  function updateScores() {
     if (highScore < score) {
       highScore = score;
     }
+    currScore = score;
+    score = 0;
   }
   //player control logic - IMPLEMENT variable speed via function (spacebar acceleration?)
   function movementHandler(player, speed) {
