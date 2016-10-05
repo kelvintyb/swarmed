@@ -1,10 +1,11 @@
-//IMPLEMENT states/instructions
-//IMPLEMENT animation for objects/ change color of mutas
+//IMPLEMENT instructions state + backgrounds for the menuState,loseState
+//IMPLEMENT animation for objects
 //IMPLEMENT sounds - for player getting hit, player killed, nuke appearing, nuke damage & mutas dying, shield/nitro appearing, shield collide, nitro collide
 
 //IMPLEMENT 2 players
 //init player group and based on length of player.children, initiate number of enemy tracking groups to be randomised amongst the four spots
-//IMPLEMENT MULTI
+//IMPLEMENT VISUALS FOR SHIELD - can refer to http://phaser.io/examples/v2/text/center-text-on-sprite for concept
+//IMPLEMENT MULTI using happyfuntimes/jammer
 
 // $('document').ready(function() {
 var enemies,
@@ -54,9 +55,7 @@ var menuState = {
       font: '15px Courier',
       fill: '#f469e2'
     })
-
-    // TEXT to be inserted later: Learn how to play by clicking the button below or\n select one of the game modes to begin.
-    var startLabel = game.add.text(80, 500, "Press 'S' to begin, and use your arrow keys to control the wraith.\nAvoid the mutalisks!!!", {
+    var startLabel = game.add.text(80, 450, "Press 'I' to learn how to play\nOr press 'S' to start the game\nUse your arrow keys and avoid the mutalisks!!!", {
       font: '20px Arial',
       fill: '#ffffff'
     });
@@ -64,34 +63,109 @@ var menuState = {
     var sKey = game.input.keyboard.addKey(Phaser.Keyboard.S);
     sKey.onDown.addOnce(this.start, this);
 
+    var iKey = game.input.keyboard.addKey(Phaser.Keyboard.I);
+    iKey.onDown.addOnce(this.instructions, this);
   },
   start: function() {
     game.state.start('play');
+  },
+  instructions: function() {
+    game.state.start('instructions')
+  }
+}
+
+
+// game.add.sprite(125, 75, 'overlord'); 'enemy'; 'player';shield,nuke nitro
+
+var instructionState = {
+  create: function() {
+    game.stage.backgroundColor = '#e0e2e4';
+    var bKey = game.input.keyboard.addKey(Phaser.Keyboard.B);
+    bKey.onDown.addOnce(this.back, this);
+
+    var controlStyle = {
+      font: '20px Courier',
+      fill: 'rgb(7, 135, 4)'
+    }
+    var charStyle = {
+      font: '20px Courier',
+      fill: 'rgb(166, 28, 9)'
+    }
+    var powerStyle = {
+      font: '20px Courier',
+      fill: 'rgb(90, 13, 167)'
+    }
+    var controlStyleB = {
+        font: '14px Courier',
+        fill: 'rgb(1, 23, 116)'
+      }
+      // var charStyleB = {
+      //
+      // }
+      // var powerStyleB = {
+      //
+      // }
+
+
+    game.add.text(50, 50, "How To Play", {
+      font: '28px Courier',
+      fill: 'steelblue'
+    });
+    game.add.text(400, 50, "Press 'B' to go back", {
+      font: '20px starcraft',
+      fill: 'rgb(255, 0, 0)'
+    })
+
+    game.add.text(70, 160, "Controls", controlStyle);
+    game.add.text(350, 200, "Player 1", controlStyle);
+    game.add.text(500, 200, "Player 2", controlStyle);
+    game.add.text(70, 320, "Characters", charStyle);
+    game.add.text(300, 350, "Harmful - Run from these", charStyle);
+    game.add.text(430, 350, "Harmless - Spawn Points", charStyle);
+    game.add.text(600, 350, "Useless", charStyle);
+    game.add.text(70, 470, "Power-ups", powerStyle);
+    game.add.text(300, 510, "Speed Boost", powerStyle);
+    game.add.text(450, 510, "Shields", powerStyle);
+    game.add.text(600, 510, "Nuke", powerStyle);
+
+
+    game.add.sprite(350, 130, 'wasd');
+    game.add.sprite(500, 130, 'arrows');
+    game.add.sprite(300, 280, 'enemy');
+    game.add.sprite(430, 250, 'overlord');
+    game.add.sprite(600, 280, 'player');
+    game.add.sprite(300, 450, 'nitro');
+    game.add.sprite(450, 450, 'shield');
+    game.add.sprite(600, 450, 'nuke');
+
+  },
+  back: function() {
+    game.state.start('menu')
   }
 }
 
 var loseState = {
-  create: function() {
-    //Create m key listener for restart
-    var mkey = game.input.keyboard.addKey(Phaser.Keyboard.M);
-    mkey.onDown.addOnce(this.restart, this);
+    create: function() {
+      //Create m key listener for restart
+      var mkey = game.input.keyboard.addKey(Phaser.Keyboard.M);
+      mkey.onDown.addOnce(this.restart, this);
 
-    game.add.text(80, 80, "You have been muta-liated.\nPress 'M' to go back\n to the main menu.", {
-      font: '28px starcraft',
-      fill: '#14b825'
-    });
+      game.add.text(80, 80, "You have been muta-liated.\nPress 'M' to go back\nto the main menu.", {
+        font: '28px starcraft',
+        fill: '#14b825'
+      });
 
-    game.add.text(160, 340, "Player 1's score is: " + currScore, {
-      font: '28px Courier',
-      fill: 'rgb(198, 1, 1)'
-    })
-  },
-  restart: function() {
-    game.state.start('menu');
+      game.add.text(160, 340, "Player 1's score is: " + currScore, {
+        font: '28px Courier',
+        fill: 'rgb(198, 1, 1)'
+      })
+    },
+    restart: function() {
+      game.state.start('menu');
 
+    }
   }
-}
-
+  //Look further below for the functions referenced in playState
 var playState = {
   create: create,
   update: update,
@@ -101,29 +175,21 @@ var playState = {
 game.state.add('boot', bootState);
 game.state.add('load', loadState);
 game.state.add('menu', menuState);
+game.state.add('instructions', instructionState);
 game.state.add('play', playState);
 game.state.add('lose', loseState);
 
 game.state.start('boot');
 
-//  {
-//   preload: preload,
-//   create: create,
-//   update: update,
-//   render: render
-// })
-
-
-
-
 function preload() {
-  //loading text
   var loadingText = game.add.text(80, 150, 'LOADING...', {
       font: '30px starcraft',
       fill: '#ffffff'
     })
     //load images for background, player & enemies
   game.load.image('background', 'assets/orangebg2.png');
+  game.load.image('arrows', 'assets/arrows2.png');
+  game.load.image('wasd', 'assets/wasd2.png');
   game.load.image('enemy', 'assets/monster.png')
   game.load.image('player', 'assets/ship1.png');
   game.load.image('overlord', 'assets/overlords1.png');
@@ -157,7 +223,6 @@ function create() {
     players = game.add.group();
     for (var i = 0; i < numOfPlayers; i++) {
       player = players.create(game.world.centerX, game.world.centerY, 'player');
-      player.scale.setTo(0.75, 0.75);
       enableWorldBoundsFor(player);
     }
   }
@@ -172,10 +237,10 @@ function create() {
   //BUG: if i wrap timer creation into a function, update func will raise an error on .stop() - timer is undefined
   //create timer to keep track of score
   scoreTimer = game.time.create(false);
-  scoreTimer.loop(1, updateScore, this);
+  scoreTimer.loop(1, incrementScore, this);
   scoreTimer.start();
 
-  function updateScore() {
+  function incrementScore() {
     score++;
   }
   //create timer to spawn enemies
@@ -318,7 +383,7 @@ function update() {
   function resetShields() {
     shield = 100;
   }
-
+  //this updates high score and resets player scores
   function updateScores() {
     if (highScore < score) {
       highScore = score;
@@ -345,7 +410,6 @@ function update() {
   //check for angle between each enemy and player & apply to directional velocity of enemy to simulate tracking
   //IMPLEMENT multiple player tracking
   //IMPLEMENT increasing velocity for each enemy
-  //IMPLEMENT consider every alternate enemy has tracking abilities, and the rest just go randomly
   function trackingBetween(enemyGrp, player, enemySpeed) {
     enemyGrp.children.forEach(function(enemy) {
       var degrees = (180 / Math.PI) * game.physics.arcade.angleBetween(enemy, player);
@@ -355,7 +419,7 @@ function update() {
   }
   trackingBetween(enemies, player, 150)
 }
-
+//strictly speaking, should put this in update function
 function render() {
   game.debug.text('Your score is ' + score, 32, 32)
   game.debug.text('HIGH SCORE: ' + highScore, 32, 64)
