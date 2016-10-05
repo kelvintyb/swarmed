@@ -8,12 +8,17 @@
 //IMPLEMENT MULTI using happyfuntimes/jammer
 
 // $('document').ready(function() {
+//POLLUTING THE GLOBAL NAMESPACE
 var enemies,
   enemy,
   players,
   player,
   playerSpeed = 200,
-  control,
+  cursors,
+  wKey,
+  aKey,
+  sKey,
+  dKey,
   scoreTimer,
   score = 0,
   currScore = 0,
@@ -33,8 +38,6 @@ var enemies,
 //creating new phaser game object
 var game = new Phaser.Game(800, 600, Phaser.AUTO, 'gameCanvas')
 
-
-
 //adding states
 var bootState = {
   create: function() {
@@ -51,20 +54,24 @@ var loadState = {
 
 var menuState = {
   create: function() {
-    var quote = game.add.text(100, 300, "'I am the swarm. Armies will be shattered. Worlds will burn.\nNow at last, vengeance will be mine.' - Sarah Kerrigan", {
+    game.stage.backgroundColor = '#000000';
+    var quote = game.add.text(100, 250, "'I am the swarm. Armies will be shattered. Worlds will burn.\nNow at last, vengeance will be mine.' - Sarah Kerrigan", {
       font: '15px Courier',
       fill: '#f469e2'
     })
-    var startLabel = game.add.text(80, 450, "Press 'I' to learn how to play\nOr press 'S' to start the game\nUse your arrow keys and avoid the mutalisks!!!", {
+    var instructLabel = game.add.text(80, 450, "Press 'H' to learn how to play", {
       font: '20px Arial',
       fill: '#ffffff'
+    });
+    var onePlayerLabel = game.add.text(80, 480, "Press 'S' to start a 1 player game", {
+      font: '20px Arial',
+      fill: '#cc0101'
     });
     //key to start 1 player game
     var sKey = game.input.keyboard.addKey(Phaser.Keyboard.S);
     sKey.onDown.addOnce(this.start, this);
-
-    var iKey = game.input.keyboard.addKey(Phaser.Keyboard.I);
-    iKey.onDown.addOnce(this.instructions, this);
+    var hKey = game.input.keyboard.addKey(Phaser.Keyboard.H);
+    hKey.onDown.addOnce(this.instructions, this);
   },
   start: function() {
     game.state.start('play');
@@ -73,9 +80,6 @@ var menuState = {
     game.state.start('instructions')
   }
 }
-
-
-// game.add.sprite(125, 75, 'overlord'); 'enemy'; 'player';shield,nuke nitro
 
 var instructionState = {
   create: function() {
@@ -95,18 +99,10 @@ var instructionState = {
       font: '20px Courier',
       fill: 'rgb(90, 13, 167)'
     }
-    var controlStyleB = {
-        font: '14px Courier',
-        fill: 'rgb(1, 23, 116)'
-      }
-      // var charStyleB = {
-      //
-      // }
-      // var powerStyleB = {
-      //
-      // }
-
-
+    var style = {
+      font: '14px Courier',
+      fill: 'rgb(1, 23, 116)'
+    }
     game.add.text(50, 50, "How To Play", {
       font: '28px Courier',
       fill: 'steelblue'
@@ -117,17 +113,16 @@ var instructionState = {
     })
 
     game.add.text(70, 160, "Controls", controlStyle);
-    game.add.text(350, 200, "Player 1", controlStyle);
-    game.add.text(500, 200, "Player 2", controlStyle);
+    game.add.text(350, 200, "Player 1", style);
+    game.add.text(500, 200, "Player 2", style);
     game.add.text(70, 320, "Characters", charStyle);
-    game.add.text(300, 350, "Harmful - Run from these", charStyle);
-    game.add.text(430, 350, "Harmless - Spawn Points", charStyle);
-    game.add.text(600, 350, "Useless", charStyle);
+    game.add.text(300, 350, "HARMFUL:\nRun from \nthese", style);
+    game.add.text(430, 350, "HARMLESS:\nSpawn Points", style);
+    game.add.text(600, 350, "USELESS:\nYou control this", style);
     game.add.text(70, 470, "Power-ups", powerStyle);
-    game.add.text(300, 510, "Speed Boost", powerStyle);
-    game.add.text(450, 510, "Shields", powerStyle);
-    game.add.text(600, 510, "Nuke", powerStyle);
-
+    game.add.text(280, 510, "Speed Boost:\nDecays over time", style);
+    game.add.text(450, 510, "Shields:\nHelps take\ndamage", style);
+    game.add.text(600, 510, "Nuke:\nKills all \nenemies onscreen", style);
 
     game.add.sprite(350, 130, 'wasd');
     game.add.sprite(500, 130, 'arrows');
@@ -137,24 +132,20 @@ var instructionState = {
     game.add.sprite(300, 450, 'nitro');
     game.add.sprite(450, 450, 'shield');
     game.add.sprite(600, 450, 'nuke');
-
   },
   back: function() {
     game.state.start('menu')
   }
 }
-
 var loseState = {
     create: function() {
       //Create m key listener for restart
       var mkey = game.input.keyboard.addKey(Phaser.Keyboard.M);
       mkey.onDown.addOnce(this.restart, this);
-
-      game.add.text(80, 80, "You have been muta-liated.\nPress 'M' to go back\nto the main menu.", {
+      game.add.text(80, 100, "You have been muta-liated.\n\nPress 'M' to go back\nto the main menu.", {
         font: '28px starcraft',
         fill: '#14b825'
       });
-
       game.add.text(160, 340, "Player 1's score is: " + currScore, {
         font: '28px Courier',
         fill: 'rgb(198, 1, 1)'
@@ -162,7 +153,6 @@ var loseState = {
     },
     restart: function() {
       game.state.start('menu');
-
     }
   }
   //Look further below for the functions referenced in playState
@@ -171,7 +161,6 @@ var playState = {
   update: update,
   render: render
 }
-
 game.state.add('boot', bootState);
 game.state.add('load', loadState);
 game.state.add('menu', menuState);
@@ -314,10 +303,15 @@ function create() {
     nitros.create(game.world.randomX, game.world.randomY, 'nitro');
     console.log('nitro created');
   }
-  //create keyboard mapping system - refer to source code at https://github.com/photonstorm/phaser/blob/v2.6.2/src/input/Keyboard.js for more functions.
-  control = game.input.keyboard.createCursorKeys();
+  //create keyboard mapping system for Player 1 / 2
+  wKey = game.input.keyboard.addKey(Phaser.Keyboard.W);
+  aKey = game.input.keyboard.addKey(Phaser.Keyboard.A);
+  sKey = game.input.keyboard.addKey(Phaser.Keyboard.S);
+  dKey = game.input.keyboard.addKey(Phaser.Keyboard.D);
+  cursors = game.input.keyboard.createCursorKeys();
   //prevent accidental window scrolling when in canvas focus
-  game.input.keyboard.addKeyCapture(control);
+  game.input.keyboard.addKeyCapture(cursors);
+
 }
 
 function update() {
@@ -331,7 +325,6 @@ function update() {
   //IMPLEMENT insert update scoreboard function here?
 
   function shieldHandler(player, shieldObj) {
-    console.log('when shields collide')
     if (shield <= 100) {
       //SOUND
       score += 2500
@@ -343,7 +336,6 @@ function update() {
   }
 
   function nukeHandler(player, nuke) {
-    console.log('when nukes collide')
     enemies.children.forEach(function(enemy) {
       enemy.kill();
     })
@@ -391,21 +383,36 @@ function update() {
     currScore = score;
     score = 0;
   }
-  //player control logic - IMPLEMENT variable speed via function (spacebar acceleration?)
-  function movementHandler(player, speed) {
-    player.body.velocity.x = 0, player.body.velocity.y = 0;
-    if (control.left.isDown) {
-      player.body.velocity.x = -speed;
-    } else if (control.right.isDown) {
-      player.body.velocity.x = speed;
+  //player control logic
+
+  function playerOneControls(playerSpeed) {
+    player.body.velocity.x = 0, player.body.velocity.y = 0; //IMPLEMENT nd to change to players[0] and diff speeds when implementing 2 players
+    if (aKey.isDown) {
+      player.body.velocity.x = -playerSpeed;
+    } else if (dKey.isDown) {
+      player.body.velocity.x = playerSpeed;
     }
-    if (control.up.isDown) {
-      player.body.velocity.y = -speed;
-    } else if (control.down.isDown) {
-      player.body.velocity.y = speed;
+    if (wKey.isDown) {
+      player.body.velocity.y = -playerSpeed;
+    } else if (sKey.isDown) {
+      player.body.velocity.y = playerSpeed;
     }
   }
-  movementHandler(player, playerSpeed);
+  playerOneControls(playerSpeed);
+
+  // function playerTwoControls(player, speed) {
+  // player.body.velocity.x = 0, player.body.velocity.y = 0;
+  // if (cursors.left.isDown) {
+  //   player.body.velocity.x = -speed;
+  // } else if (cursors.right.isDown) {
+  //   player.body.velocity.x = speed;
+  // }
+  // if (cursors.up.isDown) {
+  //   player.body.velocity.y = -speed;
+  // } else if (cursors.down.isDown) {
+  //   player.body.velocity.y = speed;
+  // }
+  // }
 
   //check for angle between each enemy and player & apply to directional velocity of enemy to simulate tracking
   //IMPLEMENT multiple player tracking
