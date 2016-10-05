@@ -2,10 +2,19 @@ body{
   background-image: url('zerg-background.jpg')
 }
 
+h1, p{
+  font-family: 'starcraft', Verdana, Tahoma;
+  color: #c4c4c6;
+}
 .text-center{
   text-align: center;
 }
 
 .canvas{
   padding-bottom: 3em;
+}
+
+@font-face{
+  font-family: 'starcraft';
+  src: url('starcraft-font.ttf') format("truetype");
 }
