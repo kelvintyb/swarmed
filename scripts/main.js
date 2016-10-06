@@ -64,7 +64,7 @@ var menuState = {
       font: '15px Courier',
       fill: '#f469e2'
     })
-    var instructLabel = game.add.text(80, 450, "Press 'H' to learn how to play", {
+    var instructLabel = game.add.text(80, 440, "Press 'H' to learn how to play", {
       font: '20px Arial',
       fill: '#ffffff'
     });
@@ -72,13 +72,24 @@ var menuState = {
       font: '20px Arial',
       fill: '#cc0101'
     });
+    var twoPlayerLabel = game.add.text(80, 510, "Press 'D' to start a 2 player game", {
+      font: '20px Arial',
+      fill: 'rgb(0, 13, 184)'
+    });
     //key to start 1 player game
-    var sKey = game.input.keyboard.addKey(Phaser.Keyboard.S);
-    sKey.onDown.addOnce(this.start, this);
     var hKey = game.input.keyboard.addKey(Phaser.Keyboard.H);
     hKey.onDown.addOnce(this.instructions, this);
+    var sKey = game.input.keyboard.addKey(Phaser.Keyboard.S);
+    sKey.onDown.addOnce(this.startOne, this);
+    var dKey = game.input.keyboard.addKey(Phaser.Keyboard.D);
+    dKey.onDown.addOnce(this.startTwo, this);
   },
-  start: function() {
+  startOne: function() {
+    numOfPlayers = 1;
+    game.state.start('play');
+  },
+  startTwo: function() {
+    numOfPlayers = 2;
     game.state.start('play');
   },
   instructions: function() {
@@ -147,7 +158,7 @@ var instructionState = {
       game.add.sprite(500, 130, 'arrows');
       game.add.sprite(300, 280, 'enemy');
       game.add.sprite(430, 250, 'overlord');
-      game.add.sprite(600, 280, 'player');
+      game.add.sprite(600, 280, 'player1');
       game.add.sprite(300, 450, 'nitro');
       game.add.sprite(450, 450, 'shield');
       game.add.sprite(600, 450, 'nuke');
@@ -208,8 +219,10 @@ function preload() {
   game.load.image('ending', 'assets/ending.png');
   game.load.image('arrows', 'assets/arrows2.png');
   game.load.image('wasd', 'assets/wasd2.png');
-  game.load.image('enemy', 'assets/monster.png')
-  game.load.image('player', 'assets/ship1.png');
+  game.load.image('enemy', 'assets/monster.png');
+  game.load.image('player1', 'assets/ship1.png');
+  game.load.image('player2',
+    'assets/ship2.png');
   game.load.image('overlord', 'assets/overlords1.png');
   game.load.image('shield', 'assets/shield.png');
   game.load.image('nuke', 'assets/nuke.png');
@@ -234,7 +247,8 @@ function create() {
     game.add.sprite(game.world.width - 200, game.world.height - 150, 'overlord')
   }
   addOverlord();
-  //assign GLOBAL group to delegate control of enemies
+  //NOTE: assign GLOBAL group to delegate control of enemies, use enemies tracker to assign separate grps of enemies / OR have 1 group of enemies and 1 group of players and assign within tracking func. might be easier to modularise and just have sep grps of enemies for each player & modify multiplier effect accordingly.
+
   enemies = game.add.group();
   //enable physics for anything in enemies group
   enemies.enableBody = true;
@@ -242,8 +256,10 @@ function create() {
   //create player and assign to GLOBAL var
   function createPlayer(numOfPlayers) {
     players = game.add.group();
-    for (var i = 0; i < numOfPlayers; i++) {
-      player = players.create(game.world.centerX, game.world.centerY, 'player');
+    for (var i = 1; i <= numOfPlayers; i++) {
+      player = players.create(game.world.centerX - 60 + i * 40, game.world.centerY, 'player' + i);
+      //NOTE player 1 will be tagged with player1
+      //change global variable player to track a playerTracker obj with properties[i] that can be referenced
       enableWorldBoundsFor(player);
     }
   }
@@ -270,7 +286,7 @@ function create() {
   enemyTimer.loop(1000, spawnEnemy, this);
   enemyTimer.start();
 
-  //IMPLEMENT spawn away from player
+  //randomises spawn pt coordinates
   function randSpawn() {
     var spawnX = [125, game.world.width - 200];
     var spawnY = [75, game.world.height - 150];
@@ -283,6 +299,7 @@ function create() {
     }
   }
 
+  //NOTE: multiplier needs to be inversely proportioned to numOfPlayers
   function spawnEnemy() {
     //multiplier to increase spawn rate
     var multiplier = Math.ceil(score / 5000);
@@ -380,7 +397,6 @@ function update() {
   }
 
   function collideHandler(player, enemy) {
-    console.log('when stars collide')
     if (shield > 0) {
       enemy.kill();
       shield -= 20
@@ -447,7 +463,6 @@ function update() {
 
   //check for angle between each enemy and player & apply to directional velocity of enemy to simulate tracking
   //IMPLEMENT multiple player tracking
-  //IMPLEMENT increasing velocity for each enemy
   function trackingBetween(enemyGrp, player, enemySpeed) {
     enemyGrp.children.forEach(function(enemy) {
       var degrees = (180 / Math.PI) * game.physics.arcade.angleBetween(enemy, player);
