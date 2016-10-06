@@ -1,55 +1,54 @@
-//IMPLEMENT animation for objects
-//IMPLEMENT sounds - game music; for player getting hit, player killed, nuke appearing, nuke damage & mutas dying, shield/nitro appearing, shield collide, nitro collide
-
 //IMPLEMENT 2 players
 //make 2 player objects with global vars like shield & currscore
 //init player group and based on length of player.children, initiate number of enemy tracking groups to be randomised amongst the four spots
+
+//IMPLEMENT animation for objects
+//IMPLEMENT sounds - game music; for player getting hit, player killed, nuke appearing, nuke damage & mutas dying, shield/nitro appearing, shield collide, nitro collide
+
 //IMPLEMENT VISUALS FOR SHIELD - can refer to http://phaser.io/examples/v2/text/center-text-on-sprite for concept
 //IMPLEMENT MULTI using happyfuntimes/jammer
-
-
 // $('document').ready(function() {
 //POLLUTING THE GLOBAL NAMESPACE
 var enemiesGrp,
-  enemy,
   playersGrp,
-  player,
-  //take above player var out after refactoring in player 1 and player 2 objects
-  playerSpeed = 200;
+  // player,
+  // //take above player var out after refactoring in player 1 and player 2 objects
+  // playerSpeed = 200;
 
-var controls = {
-  cursors: undefined,
-  wKey: undefined,
-  aKey: undefined,
-  sKey: undefined,
-  dKey: undefined
-}
-
+  controls = {
+    cursors: undefined,
+    wKey: undefined,
+    aKey: undefined,
+    sKey: undefined,
+    dKey: undefined
+  }
+  //player constructor
 function Player() {
-
-
+  this.score = 0;
+  this.lastScore = 0;
+  this.speed = 200;
+  this.shield = 100;
 }
+var playerOne = new Player();
+var playerTwo = new Player();
+//flag to determine handler actions in 2 player game when playerOne has died
+playerOne.isDead = false;
+playerTwo.isDead = true;
+var numOfPlayers = undefined;
 
 var scoreTimer,
-  score = 0,
-  currScore = 0,
+  scoreTimer2,
   highScore = 0,
   enemyTimer,
-  numOfPlayers = 1,
   shields,
-  shield = 100,
   shieldTimer,
   nukes,
-  nuke,
   nukeTimer,
   nitros,
-  nitro,
   nitroTimer,
   decayTimer;
-//creating new phaser game object
 var game = new Phaser.Game(800, 600, Phaser.AUTO, 'gameCanvas')
-
-//adding states
+  //adding states
 var bootState = {
   create: function() {
     game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -100,6 +99,7 @@ var menuState = {
   },
   startTwo: function() {
     numOfPlayers = 2;
+    playerTwo.isDead = false;
     game.state.start('play');
   },
   instructions: function() {
@@ -193,12 +193,19 @@ var loseState = {
         font: '28px starcraft',
         fill: '#14b825'
       });
-      game.add.text(160, 340, "Player 1's score is: " + currScore, {
+      game.add.text(160, 340, "Player 1's score is: " + playerOne.lastScore, {
         font: '28px Courier',
         fill: 'rgb(198, 1, 1)'
       })
+      if (numOfPlayers == 2) {
+        game.add.text(160, 400, "Player 2's score is: " + playerTwo.lastScore, {
+          font: '28px Courier',
+          fill: 'rgb(6, 8, 193)'
+        })
+      }
     },
     restart: function() {
+      numOfPlayers = undefined;
       game.state.start('menu');
     }
   }
@@ -280,12 +287,18 @@ function create() {
   //BUG: if i wrap timer creation into a function, update func will raise an error on .stop() - timer is undefined
   //create timer to keep track of score
   scoreTimer = game.time.create(false);
-  scoreTimer.loop(1, incrementScore, this);
+  scoreTimer.loop(1, function() {
+    playerOne.score++;
+  }, this);
   scoreTimer.start();
-
-  function incrementScore() {
-    score++;
+  if (numOfPlayers == 2) {
+    scoreTimer2 = game.time.create(false);
+    scoreTimer2.loop(1, function() {
+      playerTwo.score++;
+    }, this);
+    scoreTimer2.start();
   }
+
   //create timer to spawn enemies
   enemyTimer = game.time.create(false);
   //maybe put in players.forEach and use index to determine assign to which enemy group
@@ -298,24 +311,28 @@ function create() {
     var spawnY = [75, game.world.height - 150];
     var randX = spawnX[Math.round(Math.random())]
     var randY = spawnY[Math.round(Math.random())]
-
     return {
       x: randX,
       y: randY
     }
   }
 
-  //NOTE: multiplier needs to be inversely proportioned to numOfPlayers
+  //NOTE: multiplier needs to be inversely proportioned to numOfPlayers,
   function spawnEnemy() {
     //multiplier to increase spawn rate
-    var multiplier = Math.ceil(score / 5000);
+    var multiplier;
+    if (numOfPlayers == 2) {
+      var lowerScore = Math.min(playerOne.score, playerTwo.score)
+      multiplier = Math.ceil(lowerScore / 5000);
+    } else {
+      multiplier = Math.ceil(playerOne.score / 5000);
+    }
     for (var i = 0; i < multiplier; i++) {
       var enemy = enemiesGrp.create(randSpawn().x, randSpawn().y, 'enemy');
       enemy.scale.setTo(0.75, 0.75);
       //based on loops counter & num of players, assign to player group
     }
   }
-
   //initialise groups for powerups, and respective powerup timers
   shields = game.add.group();
   shields.enableBody = true;
@@ -338,8 +355,11 @@ function create() {
   decayTimer.start();
 
   function nitroDecay() {
-    if (playerSpeed > 200) {
-      playerSpeed -= 15;
+    if (playerOne.speed > 200) {
+      playerOne.speed -= 15;
+    }
+    if (playerTwo.speed > 200) {
+      playerTwo.speed -= 15;
     }
   }
 
@@ -369,61 +389,83 @@ function create() {
 }
 
 function update() {
-  //variable within update to determine which actions shieldHandler
-  var whichPlayer = 1;
-  //check for collision btw player & enemies or powerups
-  // playersGrp.children.forEach(function(player, index){
-  //
-  // })
-  game.physics.arcade.collide(player, enemiesGrp, collideHandler);
-  game.physics.arcade.collide(player, shields, shieldHandler);
-  game.physics.arcade.collide(player, nukes, nukeHandler);
-  game.physics.arcade.collide(player, nitros, nitroHandler);
+  playersGrp.children.forEach(function(player, index) {
+    if (playerOne.isDead) {
+      playerObj = playerTwo;
+    } else {
+      //NOTE: ternary shld generally be used for assignments - it's clearer.
+      var playerObj = (index == 0) ? playerOne : playerTwo;
+    }
+    //NOTE: see below for one approach to passing in vars to callbacks from within this function scope. another approach is to use .bind(null,playerObj) on each of the handlers
+    game.physics.arcade.collide(player, shields, function(player, shieldObj) {
+      shieldHandler(player, shieldObj, playerObj)
+    });
+    game.physics.arcade.collide(player, nitros, function(player, nitro) {
+      nitroHandler(player, nitro, playerObj)
+    });
+    game.physics.arcade.collide(player, nukes, nukeHandler);
+    game.physics.arcade.collide(player, enemiesGrp, function(player, enemy) {
+      collideHandler(player, enemy, playerObj)
+    });
+  })
 
   //collided function to kill player - note that with overlap/collide callback functions, the sprite individual will always get passed in as the 1st parameter, while the child of the sprite group will get passed in as the 2nd parameter
-  //IMPLEMENT insert update scoreboard function here?
-
-  function shieldHandler(player, shieldObj) {
-    if (shield <= 100) {
+  function shieldHandler(player, shieldObj, playerObj) {
+    if (playerObj.shield <= 100) {
       //Audio
-      score += 2500
+      playerObj.score += 2500
     } else {
-      score += 5000
+      playerObj.score += 5000
     }
-    shield += 100
+    playerObj.shield += 100
     shieldObj.kill();
   }
 
   function nukeHandler(player, nuke) {
-    enemies.children.forEach(function(enemy) {
+    enemiesGrp.children.forEach(function(enemy) {
       enemy.kill();
     })
     nuke.kill();
   }
 
-  function nitroHandler(player, nitro) {
-    playerSpeed = 350;
-    score += 1500;
+  function nitroHandler(player, nitro, playerObj) {
+    playerObj.speed = 350;
+    playerObj.score += 1500;
     nitro.kill();
   }
 
-  function collideHandler(player, enemy) {
-    if (shield > 0) {
+  function collideHandler(player, enemy, playerObj) {
+    if (playerObj.shield > 0) {
       enemy.kill();
-      shield -= 20
+      playerObj.shield -= 20
         //SOUND
     } else {
+      if (playerObj == playerOne) {
+        playerOne.isDead = true;
+        scoreTimer.stop();
+      } else if (playerObj == playerTwo) {
+        playerTwo.isDead = true;
+        scoreTimer2.stop();
+      }
       enemy.kill();
       player.kill();
-      stopTimers();
-      updateScores();
-      resetShields();
-      game.state.start('lose')
     }
+  }
+  //if no player sprites on screen, resetGame
+  if (playerOne.isDead && playerTwo.isDead) {
+    resetGame();
+  }
+
+  function resetGame() {
+    playerOne.isDead = false;
+    playerTwo.isDead = true;
+    stopTimers();
+    updateScores();
+    resetShields();
+    game.state.start('lose')
   }
 
   function stopTimers() {
-    scoreTimer.stop();
     enemyTimer.stop();
     shieldTimer.stop();
     nukeTimer.stop();
@@ -431,50 +473,54 @@ function update() {
   }
 
   function resetShields() {
-    shield = 100;
+    playerOne.shield = 100;
+    playerTwo.shield = 100;
   }
   //this updates high score and resets player scores
   function updateScores() {
-    if (highScore < score) {
-      highScore = score;
+    if (highScore < playerOne.score) {
+      highScore = playerOne.score;
+    } else if (highScore < playerTwo.score) {
+      highScore = playerTwo.score;
     }
-    currScore = score;
-    score = 0;
+    playerOne.lastScore = playerOne.score;
+    playerTwo.lastScore = playerTwo.score;
+    playerOne.score = 0;
+    playerTwo.score = 0;
   }
   //player control logic
-
   function initControls() {
     playersGrp.children.forEach(function(player, index) {
       (index == 0) ? playerOneControls(player): playerTwoControls(player);
     })
   }
   initControls();
-  //IMPLEMENT add 2nd param to reference player obj speeds
+
   function playerOneControls(player) {
     player.body.velocity.x = 0, player.body.velocity.y = 0; //IMPLEMENT nd to change to players[0] and diff speeds when implementing 2 players
     if (controls.aKey.isDown) {
-      player.body.velocity.x = -playerSpeed;
+      player.body.velocity.x = -playerOne.speed;
     } else if (controls.dKey.isDown) {
-      player.body.velocity.x = playerSpeed;
+      player.body.velocity.x = playerOne.speed;
     }
     if (controls.wKey.isDown) {
-      player.body.velocity.y = -playerSpeed;
+      player.body.velocity.y = -playerOne.speed;
     } else if (controls.sKey.isDown) {
-      player.body.velocity.y = playerSpeed;
+      player.body.velocity.y = playerOne.speed;
     }
   }
 
   function playerTwoControls(player) {
     player.body.velocity.x = 0, player.body.velocity.y = 0;
     if (controls.cursors.left.isDown) {
-      player.body.velocity.x = -playerSpeed;
+      player.body.velocity.x = -playerTwo.speed;
     } else if (controls.cursors.right.isDown) {
-      player.body.velocity.x = playerSpeed;
+      player.body.velocity.x = playerTwo.speed;
     }
     if (controls.cursors.up.isDown) {
-      player.body.velocity.y = -playerSpeed;
+      player.body.velocity.y = -playerTwo.speed;
     } else if (controls.cursors.down.isDown) {
-      player.body.velocity.y = playerSpeed;
+      player.body.velocity.y = playerTwo.speed;
     }
   }
 
@@ -489,10 +535,16 @@ function update() {
   }
   trackingBetween(enemiesGrp, player, 150)
 }
-//strictly speaking, should put this in update function
+
 function render() {
-  game.debug.text('Your score is ' + score, 32, 32)
-  game.debug.text('HIGH SCORE: ' + highScore, 32, 64)
-  game.debug.text('Shields: ' + shield, 400, 32)
+
+  game.debug.text('Player 1 Score: ' + playerOne.score, 32, 32)
+  game.debug.text('Player 1 Shields: ' + playerOne.shield, 32, 56)
+  if (numOfPlayers == 2) {
+    game.debug.text('Player 2 Score: ' + playerTwo.score, 580, 32)
+    game.debug.text('Player 2 Shields: ' + playerTwo.shield, 580, 56)
+  }
+  game.debug.text('HIGH SCORE: ' + highScore, 350, 42)
+
 }
 // });
