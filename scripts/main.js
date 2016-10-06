@@ -10,17 +10,27 @@
 
 // $('document').ready(function() {
 //POLLUTING THE GLOBAL NAMESPACE
-var enemies,
+var enemiesGrp,
   enemy,
-  players,
+  playersGrp,
   player,
-  playerSpeed = 200,
-  cursors,
-  wKey,
-  aKey,
-  sKey,
-  dKey,
-  scoreTimer,
+  //take above player var out after refactoring in player 1 and player 2 objects
+  playerSpeed = 200;
+
+var controls = {
+  cursors: undefined,
+  wKey: undefined,
+  aKey: undefined,
+  sKey: undefined,
+  dKey: undefined
+}
+
+function Player() {
+
+
+}
+
+var scoreTimer,
   score = 0,
   currScore = 0,
   highScore = 0,
@@ -249,27 +259,23 @@ function create() {
   addOverlord();
   //NOTE: assign GLOBAL group to delegate control of enemies, use enemies tracker to assign separate grps of enemies / OR have 1 group of enemies and 1 group of players and assign within tracking func. might be easier to modularise and just have sep grps of enemies for each player & modify multiplier effect accordingly.
 
-  enemies = game.add.group();
+  enemiesGrp = game.add.group();
   //enable physics for anything in enemies group
-  enemies.enableBody = true;
+  enemiesGrp.enableBody = true;
 
   //create player and assign to GLOBAL var
-  function createPlayer(numOfPlayers) {
-    players = game.add.group();
+  function createPlayerGrp(numOfPlayers) {
+    playersGrp = game.add.group();
     for (var i = 1; i <= numOfPlayers; i++) {
-      player = players.create(game.world.centerX - 60 + i * 40, game.world.centerY, 'player' + i);
+      player = playersGrp.create(game.world.centerX - 60 + i * 40, game.world.centerY, 'player' + i);
       //NOTE player 1 will be tagged with player1
       //change global variable player to track a playerTracker obj with properties[i] that can be referenced
-      enableWorldBoundsFor(player);
+      // enableWorldBoundsFor(player);
+      game.physics.arcade.enable(player);
     }
+    playersGrp.setAll('body.collideWorldBounds', true);
   }
-  createPlayer(numOfPlayers);
-
-  //enable physics and world boundaries
-  function enableWorldBoundsFor(player) {
-    game.physics.arcade.enable(player);
-    player.body.collideWorldBounds = true;
-  }
+  createPlayerGrp(numOfPlayers);
 
   //BUG: if i wrap timer creation into a function, update func will raise an error on .stop() - timer is undefined
   //create timer to keep track of score
@@ -304,7 +310,7 @@ function create() {
     //multiplier to increase spawn rate
     var multiplier = Math.ceil(score / 5000);
     for (var i = 0; i < multiplier; i++) {
-      var enemy = enemies.create(randSpawn().x, randSpawn().y, 'enemy');
+      var enemy = enemiesGrp.create(randSpawn().x, randSpawn().y, 'enemy');
       enemy.scale.setTo(0.75, 0.75);
       //based on loops counter & num of players, assign to player group
     }
@@ -339,32 +345,37 @@ function create() {
 
   function spawnShield() {
     shields.create(game.world.randomX, game.world.randomY, 'shield');
-    console.log('shield created')
+    //AUDIO
   }
 
   function spawnNuke() {
     nukes.create(game.world.randomX, game.world.randomY, 'nuke');
-    console.log('nuke created');
+    //AUDIO
   }
 
   function spawnNitro() {
     nitros.create(game.world.randomX, game.world.randomY, 'nitro');
-    console.log('nitro created');
+    //AUDIO
   }
-  //create keyboard mapping system for Player 1 / 2
-  wKey = game.input.keyboard.addKey(Phaser.Keyboard.W);
-  aKey = game.input.keyboard.addKey(Phaser.Keyboard.A);
-  sKey = game.input.keyboard.addKey(Phaser.Keyboard.S);
-  dKey = game.input.keyboard.addKey(Phaser.Keyboard.D);
-  cursors = game.input.keyboard.createCursorKeys();
+  //create keyboard mapping system for Player 1 / 2 - could refactor into createControl func taking in arguments object
+  controls.wKey = game.input.keyboard.addKey(Phaser.Keyboard.W);
+  controls.aKey = game.input.keyboard.addKey(Phaser.Keyboard.A);
+  controls.sKey = game.input.keyboard.addKey(Phaser.Keyboard.S);
+  controls.dKey = game.input.keyboard.addKey(Phaser.Keyboard.D);
+  controls.cursors = game.input.keyboard.createCursorKeys();
   //prevent accidental window scrolling when in canvas focus
-  game.input.keyboard.addKeyCapture(cursors);
+  game.input.keyboard.addKeyCapture(controls.cursors);
 
 }
 
 function update() {
+  //variable within update to determine which actions shieldHandler
+  var whichPlayer = 1;
   //check for collision btw player & enemies or powerups
-  game.physics.arcade.collide(player, enemies, collideHandler);
+  // playersGrp.children.forEach(function(player, index){
+  //
+  // })
+  game.physics.arcade.collide(player, enemiesGrp, collideHandler);
   game.physics.arcade.collide(player, shields, shieldHandler);
   game.physics.arcade.collide(player, nukes, nukeHandler);
   game.physics.arcade.collide(player, nitros, nitroHandler);
@@ -374,7 +385,7 @@ function update() {
 
   function shieldHandler(player, shieldObj) {
     if (shield <= 100) {
-      //SOUND
+      //Audio
       score += 2500
     } else {
       score += 5000
@@ -432,37 +443,43 @@ function update() {
   }
   //player control logic
 
-  function playerOneControls(playerSpeed) {
+  function initControls() {
+    playersGrp.children.forEach(function(player, index) {
+      (index == 0) ? playerOneControls(player): playerTwoControls(player);
+    })
+  }
+  initControls();
+  //IMPLEMENT add 2nd param to reference player obj speeds
+  function playerOneControls(player) {
     player.body.velocity.x = 0, player.body.velocity.y = 0; //IMPLEMENT nd to change to players[0] and diff speeds when implementing 2 players
-    if (aKey.isDown) {
+    if (controls.aKey.isDown) {
       player.body.velocity.x = -playerSpeed;
-    } else if (dKey.isDown) {
+    } else if (controls.dKey.isDown) {
       player.body.velocity.x = playerSpeed;
     }
-    if (wKey.isDown) {
+    if (controls.wKey.isDown) {
       player.body.velocity.y = -playerSpeed;
-    } else if (sKey.isDown) {
+    } else if (controls.sKey.isDown) {
       player.body.velocity.y = playerSpeed;
     }
   }
-  playerOneControls(playerSpeed);
 
-  // function playerTwoControls(player, speed) {
-  // player.body.velocity.x = 0, player.body.velocity.y = 0;
-  // if (cursors.left.isDown) {
-  //   player.body.velocity.x = -speed;
-  // } else if (cursors.right.isDown) {
-  //   player.body.velocity.x = speed;
-  // }
-  // if (cursors.up.isDown) {
-  //   player.body.velocity.y = -speed;
-  // } else if (cursors.down.isDown) {
-  //   player.body.velocity.y = speed;
-  // }
-  // }
+  function playerTwoControls(player) {
+    player.body.velocity.x = 0, player.body.velocity.y = 0;
+    if (controls.cursors.left.isDown) {
+      player.body.velocity.x = -playerSpeed;
+    } else if (controls.cursors.right.isDown) {
+      player.body.velocity.x = playerSpeed;
+    }
+    if (controls.cursors.up.isDown) {
+      player.body.velocity.y = -playerSpeed;
+    } else if (controls.cursors.down.isDown) {
+      player.body.velocity.y = playerSpeed;
+    }
+  }
 
   //check for angle between each enemy and player & apply to directional velocity of enemy to simulate tracking
-  //IMPLEMENT multiple player tracking
+  //IMPLEMENT multiple player tracking - use 2 enemiesGrp to track and use index to tag players to track
   function trackingBetween(enemyGrp, player, enemySpeed) {
     enemyGrp.children.forEach(function(enemy) {
       var degrees = (180 / Math.PI) * game.physics.arcade.angleBetween(enemy, player);
@@ -470,7 +487,7 @@ function update() {
       game.physics.arcade.velocityFromAngle(degrees + randomiser, enemySpeed, enemy.body.velocity);
     })
   }
-  trackingBetween(enemies, player, 150)
+  trackingBetween(enemiesGrp, player, 150)
 }
 //strictly speaking, should put this in update function
 function render() {
