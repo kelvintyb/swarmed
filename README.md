@@ -4,8 +4,8 @@ Survival game built while exploring the Phaser framework as part of the General 
 
 ## Getting Started
 
-Player 1 Controls: WSAD keys
-Player 2 Controls: Arrow keys
+* Player 1 Controls: WSAD keys
+* Player 2 Controls: Arrow keys
 
 Survive by running away from the mutalisks!
 

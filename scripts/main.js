@@ -1,11 +1,12 @@
-//IMPLEMENT instructions state + backgrounds for the menuState,loseState
 //IMPLEMENT animation for objects
-//IMPLEMENT sounds - for player getting hit, player killed, nuke appearing, nuke damage & mutas dying, shield/nitro appearing, shield collide, nitro collide
+//IMPLEMENT sounds - game music; for player getting hit, player killed, nuke appearing, nuke damage & mutas dying, shield/nitro appearing, shield collide, nitro collide
 
 //IMPLEMENT 2 players
+//make 2 player objects with global vars like shield & currscore
 //init player group and based on length of player.children, initiate number of enemy tracking groups to be randomised amongst the four spots
 //IMPLEMENT VISUALS FOR SHIELD - can refer to http://phaser.io/examples/v2/text/center-text-on-sprite for concept
 //IMPLEMENT MULTI using happyfuntimes/jammer
+
 
 // $('document').ready(function() {
 //POLLUTING THE GLOBAL NAMESPACE
@@ -54,8 +55,12 @@ var loadState = {
 
 var menuState = {
   create: function() {
-    game.stage.backgroundColor = '#000000';
-    var quote = game.add.text(100, 250, "'I am the swarm. Armies will be shattered. Worlds will burn.\nNow at last, vengeance will be mine.' - Sarah Kerrigan", {
+    var menuBg = game.add.sprite(0, 0, 'menu-bg');
+    menuBg.x = 0;
+    menuBg.y = 0;
+    menuBg.height = game.height;
+    menuBg.width = game.width;
+    var quote = game.add.text(100, 250, "'I am the swarm. Armies will be shattered. Worlds will burn.\nNow at last, vengeance shall be mine.' - Sarah Kerrigan", {
       font: '15px Courier',
       fill: '#f469e2'
     })
@@ -83,55 +88,71 @@ var menuState = {
 
 var instructionState = {
   create: function() {
-    game.stage.backgroundColor = '#e0e2e4';
+    var instructBg = game.add.sprite(0, 0, 'instructions-bg');
+    instructBg.x = 0;
+    instructBg.y = 0;
+    instructBg.height = game.height;
+    instructBg.width = game.width;
+
     var bKey = game.input.keyboard.addKey(Phaser.Keyboard.B);
     bKey.onDown.addOnce(this.back, this);
 
     var controlStyle = {
       font: '20px Courier',
+      fontWeight: 'bold',
       fill: 'rgb(7, 135, 4)'
     }
     var charStyle = {
       font: '20px Courier',
+      fontWeight: 'bold',
       fill: 'rgb(166, 28, 9)'
     }
     var powerStyle = {
       font: '20px Courier',
-      fill: 'rgb(90, 13, 167)'
+      fontWeight: 'bold',
+      fill: 'rgb(67, 0, 134)'
     }
     var style = {
       font: '14px Courier',
-      fill: 'rgb(1, 23, 116)'
+      fill: '#ffffff'
+        // 'rgb(1, 23, 116)'
     }
     game.add.text(50, 50, "How To Play", {
       font: '28px Courier',
-      fill: 'steelblue'
+      fill: 'rgb(0, 33, 255)'
     });
     game.add.text(400, 50, "Press 'B' to go back", {
-      font: '20px starcraft',
-      fill: 'rgb(255, 0, 0)'
-    })
+        font: '20px starcraft',
+        fontWeight: 'bold',
+        fill: 'rgb(255, 147, 34)'
+      })
+      //BUG: why doesn't an IIFE work here?
+    function addInstructions() {
+      game.add.text(70, 160, "Controls", controlStyle);
+      game.add.text(350, 200, "Player 1", style);
+      game.add.text(500, 200, "Player 2", style);
+      game.add.text(70, 320, "Characters", charStyle);
+      game.add.text(300, 350, "HARMFUL:\nRun from \nthese", style);
+      game.add.text(430, 350, "HARMLESS:\nSpawn Points", style);
+      game.add.text(600, 350, "USELESS:\nYou control this", style);
+      game.add.text(70, 470, "Power-ups", powerStyle);
+      game.add.text(280, 510, "Speed Boost:\nDecays over time", style);
+      game.add.text(450, 510, "Shields:\nHelps take\ndamage", style);
+      game.add.text(600, 510, "Nuke:\nKills all \nenemies onscreen", style);
+    }
+    addInstructions();
 
-    game.add.text(70, 160, "Controls", controlStyle);
-    game.add.text(350, 200, "Player 1", style);
-    game.add.text(500, 200, "Player 2", style);
-    game.add.text(70, 320, "Characters", charStyle);
-    game.add.text(300, 350, "HARMFUL:\nRun from \nthese", style);
-    game.add.text(430, 350, "HARMLESS:\nSpawn Points", style);
-    game.add.text(600, 350, "USELESS:\nYou control this", style);
-    game.add.text(70, 470, "Power-ups", powerStyle);
-    game.add.text(280, 510, "Speed Boost:\nDecays over time", style);
-    game.add.text(450, 510, "Shields:\nHelps take\ndamage", style);
-    game.add.text(600, 510, "Nuke:\nKills all \nenemies onscreen", style);
-
-    game.add.sprite(350, 130, 'wasd');
-    game.add.sprite(500, 130, 'arrows');
-    game.add.sprite(300, 280, 'enemy');
-    game.add.sprite(430, 250, 'overlord');
-    game.add.sprite(600, 280, 'player');
-    game.add.sprite(300, 450, 'nitro');
-    game.add.sprite(450, 450, 'shield');
-    game.add.sprite(600, 450, 'nuke');
+    function addSprites() {
+      game.add.sprite(350, 130, 'wasd');
+      game.add.sprite(500, 130, 'arrows');
+      game.add.sprite(300, 280, 'enemy');
+      game.add.sprite(430, 250, 'overlord');
+      game.add.sprite(600, 280, 'player');
+      game.add.sprite(300, 450, 'nitro');
+      game.add.sprite(450, 450, 'shield');
+      game.add.sprite(600, 450, 'nuke');
+    }
+    addSprites();
   },
   back: function() {
     game.state.start('menu')
@@ -139,10 +160,15 @@ var instructionState = {
 }
 var loseState = {
     create: function() {
+      var endingBg = game.add.sprite(0, 0, 'ending');
+      endingBg.x = 0;
+      endingBg.y = 0;
+      endingBg.height = game.height;
+      endingBg.width = game.width;
       //Create m key listener for restart
-      var mkey = game.input.keyboard.addKey(Phaser.Keyboard.M);
-      mkey.onDown.addOnce(this.restart, this);
-      game.add.text(80, 100, "You have been muta-liated.\n\nPress 'M' to go back\nto the main menu.", {
+      var bkey = game.input.keyboard.addKey(Phaser.Keyboard.B);
+      bkey.onDown.addOnce(this.restart, this);
+      game.add.text(80, 100, "You have been muta-liated.\n\nPress 'B' to go back\nto the main menu.", {
         font: '28px starcraft',
         fill: '#14b825'
       });
@@ -177,6 +203,9 @@ function preload() {
     })
     //load images for background, player & enemies
   game.load.image('background', 'assets/orangebg2.png');
+  game.load.image('menu-bg', 'assets/menu.png');
+  game.load.image('instructions-bg', 'assets/instruct-bg.png');
+  game.load.image('ending', 'assets/ending.png');
   game.load.image('arrows', 'assets/arrows2.png');
   game.load.image('wasd', 'assets/wasd2.png');
   game.load.image('enemy', 'assets/monster.png')
@@ -185,6 +214,9 @@ function preload() {
   game.load.image('shield', 'assets/shield.png');
   game.load.image('nuke', 'assets/nuke.png');
   game.load.image('nitro', 'assets/speed2.png');
+
+  //load audio
+  // game.load.audio()
 }
 
 function create() {
